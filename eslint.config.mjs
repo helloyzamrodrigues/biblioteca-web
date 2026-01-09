@@ -1,23 +1,23 @@
 import eslint from '@eslint/js';
-import tseslint from 'typescript-eslint';
+import prettier from 'eslint-config-prettier';
 import reactPlugin from 'eslint-plugin-react';
-import prettierPlugin from 'eslint-plugin-prettier';
-import prettierConfig from 'eslint-config-prettier';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import globals from 'globals';
+import tseslint from 'typescript-eslint';
 
-export default tseslint.config(
-  // Configurações base
+export default [
+  // Ignorar pastas
   {
-    ignores: ['**/node_modules/', '**/dist/', '**/build/'],
+    ignores: ['**/node_modules/', '**/dist/', '**/build/', '**/.git/'],
   },
 
-  // Configurações globais
+  // Configuração global
   {
     languageOptions: {
       globals: {
         ...globals.browser,
         ...globals.node,
+        ...globals.es2020,
       },
       parserOptions: {
         ecmaVersion: 'latest',
@@ -37,7 +37,7 @@ export default tseslint.config(
   // ESLint recomendado
   eslint.configs.recommended,
 
-  // TypeScript ESLint
+  // TypeScript ESLint - NOVO FORMATO
   ...tseslint.configs.recommended,
 
   // React plugin
@@ -53,24 +53,34 @@ export default tseslint.config(
     },
   },
 
-  // Prettier plugin
-  {
-    plugins: {
-      prettier: prettierPlugin,
-    },
-    rules: {
-      ...prettierConfig.rules,
-      'prettier/prettier': ['error', {}, { usePrettierrc: true }],
-    },
-  },
+  // Prettier - integração correta
+  prettier,
 
-  // Simple Import Sort plugin
+  // Simple Import Sort
   {
     plugins: {
       'simple-import-sort': simpleImportSort,
     },
     rules: {
-      'simple-import-sort/imports': 'error',
+      'simple-import-sort/imports': [
+        'error',
+        {
+          groups: [
+            // React e coisas relacionadas
+            ['^react', '^@?\\w'],
+            // Side effect imports
+            ['^\\u0000'],
+            // Módulos internos
+            ['^@/'],
+            // Parent imports
+            ['^\\.\\.(?!/?$)', '^\\.\\./?$'],
+            // Other relative imports
+            ['^\\./(?=.*/)(?!/?$)', '^\\.(?!/?$)', '^\\./?$'],
+            // Style imports
+            ['^.+\\.?(css|scss|less)$'],
+          ],
+        },
+      ],
       'simple-import-sort/exports': 'error',
     },
   },
@@ -81,6 +91,11 @@ export default tseslint.config(
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
     },
-  }
-);
+  },
+];
